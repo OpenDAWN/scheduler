@@ -1,0 +1,23 @@
+{
+  "name": "examples",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "bundle": "browserify -e index.js -o dist/index.js",
+    "watch": "nodemon --ignore dist/index.js -e js -x npm run bundle",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "audio-context": "git://github.com/ircam-rnd/audio-context",
+    "granular-engine": "git://github.com/ircam-rnd/granular-engine",
+    "loaders": "git://github.com/ircam-rnd/loaders",
+    "play-control": "git://github.com/ircam-rnd/play-control",
+    "transport": "git://github.com/ircam-rnd/transport"
+  },
+  "devDependencies": {
+    "browserify": "^9.0.3"
+  }
+}

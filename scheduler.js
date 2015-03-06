@@ -7,7 +7,7 @@
 
 var PriorityQueue = require("priority-queue");
 var TimeEngine = require("time-engine");
-var defaultAudioContext = require("audio-context");
+var audioContext = require("audio-context");
 
 function arrayRemove(array, value) {
   var index = array.indexOf(value);
@@ -20,10 +20,15 @@ function arrayRemove(array, value) {
   return false;
 }
 
-var Scheduler = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};return o["a"]===t})({},{});var DP$0 = Object.defineProperty;var GOPD$0 = Object.getOwnPropertyDescriptor;var MIXIN$0 = function(t,s){for(var p in s){if(s.hasOwnProperty(p)){DP$0(t,p,GOPD$0(s,p));}}return t};var DPS$0 = Object.defineProperties;var proto$0={};
-  function Scheduler() {var options = arguments[0];if(options === void 0)options = {};var audioContext = arguments[1];if(audioContext === void 0)audioContext = defaultAudioContext;
-    this.__audioContext = audioContext;
+// Returns if two numbers are equal with 4 decimals precision (for MILLIS)
+function fourDecimalsComparison(num1, num2) {
+  var fixed1 = new Number(num1).toFixed(4);
+  var fixed2 = new Number(num2).toFixed(4);
+  return fixed1 === fixed2;
+}
 
+var Scheduler = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};return o["a"]===t})({},{});var DP$0 = Object.defineProperty;var GOPD$0 = Object.getOwnPropertyDescriptor;var MIXIN$0 = function(t,s){for(var p in s){if(s.hasOwnProperty(p)){DP$0(t,p,GOPD$0(s,p));}}return t};var DPS$0 = Object.defineProperties;var proto$0={};
+  function Scheduler() {
     this.__queue = new PriorityQueue();
     this.__engines = [];
 
@@ -35,18 +40,17 @@ var Scheduler = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};re
      * scheduler (setTimeout) period
      * @type {Number}
      */
-    this.period = options.period || 0.025;
+    this.period = 0.025;
 
     /**
      * scheduler lookahead time (> period)
      * @type {Number}
      */
-    this.lookahead = options.lookahead || 0.1;
+    this.lookahead = 0.1;
   }DPS$0(Scheduler.prototype,{currentTime: {"get": $currentTime_get$0, "configurable":true,"enumerable":true}});DP$0(Scheduler,"prototype",{"configurable":false,"enumerable":false,"writable":false});
 
   // setTimeout scheduling loop
   proto$0.__tick = function() {
-    var audioContext = this.__audioContext;
     var nextTime = this.__nextTime;
 
     this.__timeout = null;
@@ -56,6 +60,10 @@ var Scheduler = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};re
 
       var engine = this.__queue.head;
       var time = engine.advanceTime(this.__currentTime);
+      
+      if ( fourDecimalsComparison(time, nextTime) ) {
+        throw new Error("Time cannot be equal to nextTime/currentTime");
+      }
 
       if (time && time < Infinity) {
         nextTime = this.__queue.move(engine, Math.max(time, this.__currentTime));
@@ -81,7 +89,7 @@ var Scheduler = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};re
     if (nextTime !== Infinity) {
       this.__nextTime = nextTime;
 
-      var timeOutDelay = Math.max((nextTime - this.__audioContext.currentTime - this.lookahead), this.period);
+      var timeOutDelay = Math.max((nextTime - audioContext.currentTime - this.lookahead), this.period);
 
       this.__timeout = setTimeout(function()  {
         this$0.__tick();
@@ -94,7 +102,7 @@ var Scheduler = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};re
    * @return {Number} current scheduler time including lookahead
    */
   function $currentTime_get$0() {
-    return this.__currentTime || this.__audioContext.currentTime + this.lookahead;
+    return this.__currentTime || audioContext.currentTime + this.lookahead;
   }
 
   /**

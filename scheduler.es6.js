@@ -7,7 +7,7 @@
 
 var PriorityQueue = require("priority-queue");
 var TimeEngine = require("time-engine");
-var defaultAudioContext = require("audio-context");
+var audioContext = require("audio-context");
 
 function arrayRemove(array, value) {
   var index = array.indexOf(value);
@@ -20,10 +20,15 @@ function arrayRemove(array, value) {
   return false;
 }
 
-class Scheduler {
-  constructor(options = {}, audioContext = defaultAudioContext) {
-    this.audioContext = audioContext;
+// Returns if two numbers are equal with 4 decimals precision (for MILLIS)
+function fourDecimalsComparison(num1, num2) {
+  var fixed1 = new Number(num1).toFixed(4);
+  var fixed2 = new Number(num2).toFixed(4);
+  return fixed1 === fixed2;
+}
 
+class Scheduler {
+  constructor() {
     this.__queue = new PriorityQueue();
     this.__engines = [];
 
@@ -35,18 +40,17 @@ class Scheduler {
      * scheduler (setTimeout) period
      * @type {Number}
      */
-    this.period = options.period || 0.025;
+    this.period = 0.025;
 
     /**
      * scheduler lookahead time (> period)
      * @type {Number}
      */
-    this.lookahead = options.lookahead || 0.1;
+    this.lookahead = 0.1;
   }
 
   // setTimeout scheduling loop
   __tick() {
-    var audioContext = this.audioContext;
     var nextTime = this.__nextTime;
 
     this.__timeout = null;
@@ -56,6 +60,10 @@ class Scheduler {
 
       var engine = this.__queue.head;
       var time = engine.advanceTime(this.__currentTime);
+      
+      if ( fourDecimalsComparison(time, nextTime) ) {
+        throw new Error("Time cannot be equal to nextTime/currentTime");
+      }
 
       if (time && time < Infinity) {
         nextTime = this.__queue.move(engine, Math.max(time, this.__currentTime));
@@ -81,7 +89,7 @@ class Scheduler {
     if (nextTime !== Infinity) {
       this.__nextTime = nextTime;
 
-      var timeOutDelay = Math.max((nextTime - this.audioContext.currentTime - this.lookahead), this.period);
+      var timeOutDelay = Math.max((nextTime - audioContext.currentTime - this.lookahead), this.period);
 
       this.__timeout = setTimeout(() => {
         this.__tick();
@@ -94,7 +102,7 @@ class Scheduler {
    * @return {Number} current scheduler time including lookahead
    */
   get currentTime() {
-    return this.__currentTime || this.audioContext.currentTime + this.lookahead;
+    return this.__currentTime || audioContext.currentTime + this.lookahead;
   }
 
   /**

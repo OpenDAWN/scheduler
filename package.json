@@ -19,6 +19,8 @@
     "time-engine": "git://github.com/Ircam-RnD/time-engine.git#master"
   },
   "devDependencies": {
+    "gulp": "^3.8.11",
+    "gulp-es6-transpiler": "^1.0.1",
     "sinon": "^1.12.2",
     "tac6": "git://github.com/ircam-rnd/tac6.git#master"
   },
